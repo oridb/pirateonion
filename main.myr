@@ -42,39 +42,30 @@ const filelist = {path
 
 	match std.diropen(path)
 	| `std.Ok d:	dir = d
-			std.put("Opened %s\n", path)
 	| `std.Fail m:	std.put("Could not open dir %s: %s\n", path, m)
 	;;
 	while true
 		match std.dirread(dir)
-		| `std.None:	break
-		| `std.Some ".":	continue
+		| `std.None:		break
+		| `std.Some ".": 	continue
 		| `std.Some "..":	continue
 		| `std.Some ent:
-			std.put("Handling %s within %s\n", ent, path)
 			p = pathjoin(path, ent)
-			std.put("Path is %s\n", p)
 			if std.stat(p, &sb) != 0
 				std.put("Could not stat file %s\n")
-			else
-				std.put("Stat worked\n")
 			;;
-			std.put("Mode == %xw\n", sb.mode)
-			std.put("Mode & Sifmt == %xw\n", sb.mode & std.Sifmt)
 			if (sb.mode & std.Sifmt) == std.Sifdir
-				std.put("%s is dir\n", p)
 				filelist(p)
 			elif (sb.mode & std.Sifmt) == std.Sifreg
-				std.put("%s is file\n", p)
 				filehash(p)
 			else
-				std.put("Special file: %s\n", p)
+				std.put("skipping special file: %s\n", p)
 			;;
 			std.slfree(p)
 			std.slfree(ent)
 		;;
+:skip
 	;;
-	std.put("Done with %s\n", path)
 	std.dirclose(dir)
 }
 
@@ -93,18 +84,13 @@ const filehash = {p
 	;;
 
 	while true
-		std.put("Reading\n")
 		n = std.read(fd, buf[:])
-		std.put("Got %l\n", n)
 		if n == 0
 			break
 		elif n < 0
-			std.put("Error reading %s\n", p)
 			break
 		;;
-		std.put("Adding %l bytes of data\n", n)
 		cryptohash.sha256add(&h, buf[:n])
-		std.put("Done\n")
 	;;
 	hval = cryptohash.sha256fin(&h)
 	std.close(fd)
