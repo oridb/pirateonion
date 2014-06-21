@@ -28,14 +28,33 @@ const client = {
 }
 
 const server = {
+	var filemap
+
+	filemap = std.mkht(std.strhash, std.streq)
 	std.put("Running as server\n")
 	for d in opt_dirs
 		std.put("Listing %s\n", d)
-		filelist(d)
+		filelist(filemap, d)
 	;;
+
+	filemapfree(filemap)
 }
 
-const filelist = {path
+const filemapfree = {fm
+	var keys
+
+	keys = std.htkeys(fm)
+	for k in keys
+		std.slfree(std.htgetv(fm, k, ""))
+		std.slfree(k)
+	;;
+	std.slfree(keys)
+	std.htfree(fm)
+}
+
+
+
+const filelist = {filemap, path
 	var dir
 	var sb
 	var p
@@ -55,9 +74,9 @@ const filelist = {path
 				std.put("Could not stat file %s\n")
 			;;
 			if (sb.mode & std.Sifmt) == std.Sifdir
-				filelist(p)
+				filelist(filemap, p)
 			elif (sb.mode & std.Sifmt) == std.Sifreg
-				filehash(p)
+				filehash(filemap, p)
 			else
 				std.put("skipping special file: %s\n", p)
 			;;
@@ -69,7 +88,7 @@ const filelist = {path
 	std.dirclose(dir)
 }
 
-const filehash = {p
+const filehash = {filemap, p
 	var buf : byte[1024*1024]
 	var hval
 	var fd
@@ -103,6 +122,7 @@ const filehash = {p
 		;;
 	;;
 	std.put("\tpath:%s\n", p)
+	std.htput(filemap, std.sldup(hval[:]), std.sldup(p))
 }
 
 const pathjoin = {a, b
