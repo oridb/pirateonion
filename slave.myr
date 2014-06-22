@@ -11,9 +11,8 @@ const slave = {
 	var filemap
 
 	filemap = std.mkht(std.strhash, std.streq)
-	std.put("Running as server\n")
+	std.put("Running as slave\n")
 	for d in opt_dirs
-		std.put("Listing %s\n", d)
 		filelist(filemap, d)
 		syncsend(filemap)
 	;;
