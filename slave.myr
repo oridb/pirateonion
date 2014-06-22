@@ -1,4 +1,5 @@
 use std
+use bio
 use cryptohash
 use "opts.use"
 
@@ -14,24 +15,62 @@ const slave = {
 	for d in opt_dirs
 		std.put("Listing %s\n", d)
 		filelist(filemap, d)
+		syncsend(filemap)
 	;;
 
 	filemapfree(filemap)
 }
 
-const filemapfree = {fm
-	var keys
+const syncsend = {filemap
+	var fhash : byte[64]
+	var n
 
-	keys = std.htkeys(fm)
-	for k in keys
-		std.slfree(std.htgetv(fm, k, ""))
-		std.slfree(k)
+	while true
+		n = std.read(0, fhash[:])
+		if n == 64
+			sendfile(filemap, fhash[:])
+		elif n <= 0
+			break
+		;;
 	;;
-	std.slfree(keys)
-	std.htfree(fm)
 }
 
+const sendfile = {filemap, fhash
+	var buf : byte[1024*1024]
+	var path
+	var sz, n
+	var fd
+	var sb
 
+	match std.htget(filemap, fhash)
+	| `std.None:	std.put("Error locating %s\n", fhash)
+	| `std.Some p:	path = p
+	;;
+
+	fd = std.open(path, std.Ordonly)
+	if fd < 0
+		std.put("Failed to open %s\n", path)
+		->
+	;;
+	if std.fstat(fd, &sb) != 0
+		std.put("Failed to stat %s\n", path)
+		->
+	;;
+	sz = sb.size castto(int64)
+	std.put("%l\n", sz)
+	while true
+		n = std.read(fd, buf[:])
+		if n == 0
+			break
+		elif n < 0
+			break
+		;;
+		n = std.clamp(n, 0, sz)
+		std.write(0, buf[:n])
+		sz -= n
+	;;
+}
+		
 
 const filelist = {filemap, path
 	var dir
@@ -69,7 +108,7 @@ const filelist = {filemap, path
 
 const filehash = {filemap, p
 	var buf : byte[1024*1024]
-	var hbuf : byte[128]
+	var hbuf : byte[64]
 	var hval
 	var fd
 	var n
@@ -112,4 +151,16 @@ const pathjoin = {a, b
 	;;
 
 	-> std.fmt("%s%s%s", a, sep, b)
+}
+
+const filemapfree = {fm
+	var keys
+
+	keys = std.htkeys(fm)
+	for k in keys
+		std.slfree(std.htgetv(fm, k, ""))
+		std.slfree(k)
+	;;
+	std.slfree(keys)
+	std.htfree(fm)
 }
