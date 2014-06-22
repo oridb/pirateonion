@@ -1,6 +1,8 @@
 MYRBIN=pirateonion
 MYRSRC= \
 	main.myr \
+	opts.myr \
+	slave.myr \
 
 	#mklist.myr \
 	#recvfile.myr \

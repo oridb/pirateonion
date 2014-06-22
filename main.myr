@@ -1,8 +1,7 @@
 use std
-use cryptohash
 
-var opt_client = false
-var opt_dirs
+use "slave.use"
+use "opts.use"
 
 const main = {args
 	var ctx
@@ -16,126 +15,17 @@ const main = {args
 
 	opt_dirs = ["."][:]
 	/*loadconfig()*/
-	if opt_client
-		client()
+	if opt_master
+		master()
 	else
-		server()
+		slave()
 	;;
 }
 
-const client = {
+const master = {
 	std.fatal(1, "Unimplemented client\n")
 }
 
-const server = {
-	var filemap
-
-	filemap = std.mkht(std.strhash, std.streq)
-	std.put("Running as server\n")
-	for d in opt_dirs
-		std.put("Listing %s\n", d)
-		filelist(filemap, d)
-	;;
-
-	filemapfree(filemap)
-}
-
-const filemapfree = {fm
-	var keys
-
-	keys = std.htkeys(fm)
-	for k in keys
-		std.slfree(std.htgetv(fm, k, ""))
-		std.slfree(k)
-	;;
-	std.slfree(keys)
-	std.htfree(fm)
-}
-
-
-
-const filelist = {filemap, path
-	var dir
-	var sb
-	var p
-
-	match std.diropen(path)
-	| `std.Ok d:	dir = d
-	| `std.Fail m:	std.put("Could not open dir %s: %s\n", path, m)
-	;;
-	while true
-		match std.dirread(dir)
-		| `std.None:		break
-		| `std.Some ".": 	continue
-		| `std.Some "..":	continue
-		| `std.Some ent:
-			p = pathjoin(path, ent)
-			if std.stat(p, &sb) != 0
-				std.put("Could not stat file %s\n")
-			;;
-			if (sb.mode & std.Sifmt) == std.Sifdir
-				filelist(filemap, p)
-			elif (sb.mode & std.Sifmt) == std.Sifreg
-				filehash(filemap, p)
-			else
-				std.put("skipping special file: %s\n", p)
-			;;
-			std.slfree(p)
-			std.slfree(ent)
-		;;
-:skip
-	;;
-	std.dirclose(dir)
-}
-
-const filehash = {filemap, p
-	var buf : byte[1024*1024]
-	var hval
-	var fd
-	var n
-	var h
-
-	cryptohash.sha256init(&h)
-	fd = std.open(p, std.Ordonly)
-	if fd < 0
-		std.put("Could not open %s\n", p)
-		->
-	;;
-
-	while true
-		n = std.read(fd, buf[:])
-		if n == 0
-			break
-		elif n < 0
-			break
-		;;
-		cryptohash.sha256add(&h, buf[:n])
-	;;
-	hval = cryptohash.sha256fin(&h)
-	std.close(fd)
-	std.put("hash: ")
-	for b in hval[:]
-		if b < 0x10
-			std.put("0%xb", b)
-		else
-			std.put("%xb", b)
-		;;
-	;;
-	std.put("\tpath:%s\n", p)
-	std.htput(filemap, std.sldup(hval[:]), std.sldup(p))
-}
-
-const pathjoin = {a, b
-	var sep
-
-	if a[a.len-1] == '/' castto(byte) || b[0] == '/' castto(byte)
-		sep = ""
-	else
-		sep = "/"
-	;;
-
-	-> std.fmt("%s%s%s", a, sep, b)
-}
 
 const usage = {bin
 	std.put("%s [-h]\n")

@@ -1,0 +1,8 @@
+pkg =
+	var opt_master 	: bool
+	var opt_dirs	: byte[:][:]
+;;
+
+var opt_master = false
+var opt_dirs
+
