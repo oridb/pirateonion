@@ -1,7 +1,9 @@
 use std
 
-use "slave.use"
+use "master.use"
+use "msg.use"
 use "opts.use"
+use "slave.use"
 
 const main = {args
 	var ctx
@@ -22,13 +24,9 @@ const main = {args
 	;;
 }
 
-const master = {
-	std.fatal(1, "Unimplemented client\n")
-}
-
-
 const usage = {bin
 	std.put("%s [-h]\n")
 	std.put("\tPirate onion. Arr-chives your files.\n")
 	std.put("\t-h\tprint this help\n")
 }
+

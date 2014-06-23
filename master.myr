@@ -1,0 +1,11 @@
+use std
+
+pkg =
+	const master	: (-> void)
+;;
+
+const master = {
+	std.fatal(1, "Unimplemented client\n")
+}
+
+
