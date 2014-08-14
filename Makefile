@@ -3,7 +3,6 @@ MYRSRC= \
 	main.myr \
 	master.myr \
 	opts.myr \
-	run.myr \
 	slave.myr \
 	msg.myr \
 
