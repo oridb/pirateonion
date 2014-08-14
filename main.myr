@@ -1,7 +1,8 @@
 use std
 
-use "opts.use"
 use "master.use"
+use "msg.use"
+use "opts.use"
 use "slave.use"
 
 const main = {args
@@ -35,3 +36,4 @@ const usage = {bin
 	std.put("\t-h\tprint this help\n")
 	std.put("\t-s\trun as slave\n")
 }
+

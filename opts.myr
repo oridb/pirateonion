@@ -5,4 +5,3 @@ pkg =
 
 var opt_master = true
 var opt_remote = ""
-

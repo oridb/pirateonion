@@ -1,0 +1,125 @@
+use std
+use bio
+
+pkg =
+	const Msgstart	: byte = 0
+	const Msgend	: byte = 1
+	const Msgann	: byte = 2
+	const Msgreq	: byte = 3
+	const Msgfhdr	: byte = 4
+
+	type msg = union
+		`Mstart
+		`Mend
+		`Mann	msgannounce
+		`Mreq	msgrequest
+		`Mfhdr	msgfilehdr
+	;;
+
+	type msgannounce = struct
+		hash	: byte[32]
+		path	: byte[:]
+	;;
+
+	type msgrequest = struct
+		hash : byte[32]
+	;;
+
+	type msgfilehdr = struct
+		mode	: uint32
+		uid	: uint32
+		gid	: uint32
+		atimesec	: uint64
+		atimensec	: uint64
+		mtimesec	: uint64
+		mtimensec	: uint64
+		ctimesec	: uint64
+		ctimensec	: uint64
+		size	: uint64
+	;;
+
+	const msgsend	: (f : bio.file#, msg : msg# -> bool)
+	const msgrecv	: (f : bio.file# -> msg#)
+	const msgpretty	: (msg : msg# -> void)
+;;
+
+/*
+generic try = {opt : std.option(@a::(numeric,integral)) -> @a::(numeric,integral)
+	match opt
+	| `std.Some v:	-> v
+	| `std.None:	std.fatal(1, "expected value, got `None\n")
+	;;
+}
+*/
+
+const msgsend	= {f, msg
+	match msg#
+	| `Mstart:
+		bio.putb(f, Msgstart)
+	| `Mend:
+		bio.putb(f, Msgend)
+	| `Mann a:
+		bio.putb(f, Msgann)
+		bio.write(f, a.hash[:])
+		bio.putle(f, a.path.len)
+		bio.write(f, a.path)
+	| `Mreq r:
+		bio.putb(f, Msgreq)
+		bio.write(f, r.hash[:])
+	| `Mfhdr fh:
+		bio.putb(f, Msgfhdr)
+		bio.putle(f, fh.mode)
+		bio.putle(f, fh.uid)
+		bio.putle(f, fh.gid)
+		bio.putle(f, fh.atimesec)
+		bio.putle(f, fh.atimensec)
+		bio.putle(f, fh.mtimesec)
+		bio.putle(f, fh.mtimensec)
+		bio.putle(f, fh.ctimesec)
+		bio.putle(f, fh.ctimensec)
+		bio.putle(f, fh.size)
+	;;
+	-> true
+}
+
+/*
+const msgrecv = {f
+	var t
+	var hash : byte[32]
+	var fh : msgfilehdr
+	var npath
+	var path
+
+	t = bio.getb(f)
+	match t
+	| `std.Some Msgstart:
+		-> std.mk(`Mstart)
+	| `std.Some Msgend:
+		-> std.mk(`Mend)
+	| `std.Some Msgann:
+		bio.read(f, hash[:])
+		npath = try(bio.getle(f))
+		path = std.slalloc(npath)
+		bio.read(f, path)
+		-> std.mk(`Mann [.hash=hash, .path=path])
+	| `std.Some Msgreq:
+		bio.read(f, hash[:])
+		-> std.mk(`Mreq	 [.hash=hash])
+	| `std.Some Msgfhdr:
+		fh.mode	= try(bio.getle(f))
+		fh.uid	= try(bio.getle(f))
+		fh.gid	= try(bio.getle(f))
+		fh.atimesec	= try(bio.getle(f))
+		fh.atimensec	= try(bio.getle(f))
+		fh.mtimesec	= try(bio.getle(f))
+		fh.mtimensec	= try(bio.getle(f))
+		fh.ctimesec	= try(bio.getle(f))
+		fh.ctimensec	= try(bio.getle(f))
+		fh.size	= try(bio.getle(f));
+		-> std.mk(`Mfhdr fh)
+	| `std.None:
+		std.fatal(1, "Malformed message!\n")
+	;;
+}
+*/
+
