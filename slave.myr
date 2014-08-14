@@ -1,18 +1,19 @@
 use std
 use bio
 use cryptohash
+
 use "opts.use"
 
 pkg =
-	const slave : (-> void)
+	const slave : (dirs : byte[:][:] -> void)
 ;;
 
-const slave = {
+const slave = {dirs
 	var filemap
 
 	filemap = std.mkht(std.strhash, std.streq)
 	std.put("Running as slave\n")
-	for d in opt_dirs
+	for d in dirs
 		filelist(filemap, d)
 		syncsend(filemap)
 	;;

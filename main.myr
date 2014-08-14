@@ -1,34 +1,37 @@
 use std
 
-use "slave.use"
 use "opts.use"
+use "master.use"
+use "slave.use"
 
 const main = {args
 	var ctx
+	var dirs
 
-	ctx = std.optinit("h", args)
+	ctx = std.optinit("hsr", args)
 	while !std.optdone(ctx)
 		match std.optnext(ctx)
 		| ('h', _):	usage(args[0])
+		| ('s', _):	opt_master = false
+		| ('r', rsrv):	opt_remote = rsrv
 		;;
 	;;
 
-	opt_dirs = ["."][:]
-	/*loadconfig()*/
-	if opt_master
-		master()
+	if ctx.args.len == 0
+		dirs = ["."][:]
 	else
-		slave()
+		dirs = ctx.args
+	;;
+	if opt_master
+		master(dirs)
+	else
+		slave(dirs)
 	;;
 }
 
-const master = {
-	std.fatal(1, "Unimplemented client\n")
-}
-
-
 const usage = {bin
-	std.put("%s [-h]\n")
+	std.put("%s [-h] [-s] dirs...\n")
 	std.put("\tPirate onion. Arr-chives your files.\n")
 	std.put("\t-h\tprint this help\n")
+	std.put("\t-s\trun as slave\n")
 }

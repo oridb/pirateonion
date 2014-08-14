@@ -1,6 +1,7 @@
 MYRBIN=pirateonion
 MYRSRC= \
 	main.myr \
+	master.myr \
 	opts.myr \
 	slave.myr \
 
