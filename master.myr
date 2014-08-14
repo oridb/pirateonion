@@ -1,0 +1,79 @@
+use std
+
+use "opts.use"
+
+pkg =
+	const master	: (dirs : byte[:][:] -> void)
+;;
+
+const master = {dirs
+	var pid
+	var err
+	var pbuf:std.fd[2]
+	var ps
+
+
+	ps = pbuf[:]
+	err = std.pipe(ps)
+	if err != 0
+		std.fatal(1, "Could not create pipes: err %l\n", -err)
+	;;
+	std.put("%i, %i\n", ps[0], ps[1])
+	pid = runslave(ps[0], ps[1], dirs)
+	sync(ps[0], ps[1])
+	wait(pid)
+}
+
+const sync = {x, y
+	std.put("Mayday! We're syncing!\n")
+}
+
+const runslave = {infd, outfd, dirs
+	var pid
+	var cmd
+
+	/* build the command array */
+	cmd = [][:]
+	if opt_remote.len > 0
+		cmd = std.slpush(cmd, "ssh")
+		cmd = std.slpush(cmd, opt_remote)
+	;;
+	cmd = std.slpush(cmd, "pirateonion")
+	cmd = std.slpush(cmd, "-s")
+	for d in dirs
+		cmd = std.slpush(cmd, d)
+	;;
+
+	/* fork the worker */
+	pid = std.fork()
+	if pid == -1
+		std.fatal(1, "Could not fork to start slave\n")
+	elif pid == 0
+		if std.execvp(cmd[0], cmd) < 0
+			std.fatal(1, "failed to exec %s\n")
+		;;
+	else
+		-> pid
+	;;
+
+}
+
+const wait = {pid
+	var status
+
+	std.waitpid(pid, &status, 0)
+
+	/* and wait for a result */
+	match std.waitstatus(status)
+	| `std.Waitexit	estatus:
+		if estatus != 0
+			std.fatal(1, "Failed to run pirateonion", estatus)
+		;;
+	| `std.Waitsig sig:
+		if sig != 0
+			std.fatal(1, "Failed to run pirateonion: crashed with signal %i\n", sig)
+		;;
+	| `std.Waitstop stop:
+		std.fatal(1, "pirateonion stopped: %i\n", stop)
+	;;
+}
