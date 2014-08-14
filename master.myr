@@ -9,26 +9,47 @@ pkg =
 const master = {dirs
 	var pid
 	var err
-	var pbuf:std.fd[2]
-	var ps
+	var stdin : std.fd[2]
+	var stdout : std.fd[2]
 
 
-	ps = pbuf[:]
-	err = std.pipe(ps)
+	err = std.pipe(stdin[:])
 	if err != 0
 		std.fatal(1, "Could not create pipes: err %l\n", -err)
 	;;
-	std.put("%i, %i\n", ps[0], ps[1])
-	pid = runslave(ps[0], ps[1], dirs)
-	sync(ps[0], ps[1])
+	err = std.pipe(stdout[:])
+	if err != 0
+		std.fatal(1, "Could not create pipes: err %l\n", -err)
+	;;
+	pid = runslave(stdin[0], stdout[1], dirs)
+	sync(stdin[1], stdout[0])
 	wait(pid)
 }
 
-const sync = {x, y
-	std.put("Mayday! We're syncing!\n")
+const sync = {childin, childout
+	var reqhash : byte[64]
+	var rbuf : byte[2048]
+	var n, len
+
+	len = std.read(childout, rbuf[:])
+	if len >= 0
+		std.write(1, rbuf[:len])
+	;;
+	while true
+		n = std.read(0, reqhash[:])
+		if n == 64
+			std.write(childin, reqhash[:])
+		elif n <= 0
+			break
+		;;
+		len = std.read(childout, rbuf[:])
+		if len >= 0
+			std.write(1, rbuf[:len])
+		;;
+	;;
 }
 
-const runslave = {infd, outfd, dirs
+const runslave = {stdin, stdout, dirs
 	var pid
 	var cmd
 
@@ -38,7 +59,7 @@ const runslave = {infd, outfd, dirs
 		cmd = std.slpush(cmd, "ssh")
 		cmd = std.slpush(cmd, opt_remote)
 	;;
-	cmd = std.slpush(cmd, "pirateonion")
+	cmd = std.slpush(cmd, "./pirateonion")
 	cmd = std.slpush(cmd, "-s")
 	for d in dirs
 		cmd = std.slpush(cmd, d)
@@ -49,6 +70,15 @@ const runslave = {infd, outfd, dirs
 	if pid == -1
 		std.fatal(1, "Could not fork to start slave\n")
 	elif pid == 0
+		/* stdin/stdout for our communication. */
+		if std.dup2(stdin, 0) != 0
+			std.fatal(1, "unable to set stdin\n")
+		;;
+		if std.dup2(stdin, 1) != 1
+			std.fatal(1, "unable to set stdout\n")
+		;;
+		std.close(stdin)
+		std.close(stdout)
 		if std.execvp(cmd[0], cmd) < 0
 			std.fatal(1, "failed to exec %s\n")
 		;;
