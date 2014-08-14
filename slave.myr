@@ -55,7 +55,7 @@ const sendfile = {filemap, fhash
 		std.put("Failed to stat %s\n", path)
 		->
 	;;
-	sz = sb.size castto(int64)
+	sz = sb.size castto(std.size)
 	std.put("%l\n", sz)
 	while true
 		n = std.read(fd, buf[:])
