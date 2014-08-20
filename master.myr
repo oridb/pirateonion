@@ -21,8 +21,8 @@ const master = {dirs
 	if err != 0
 		std.fatal(1, "Could not create pipes: err %l\n", -err)
 	;;
-	pid = runslave(stdin[0], stdout[1], dirs)
-	sync(stdin[1], stdout[0])
+	pid = runslave(stdin[1], stdout[0], dirs)
+	sync(stdin[0], stdout[1])
 	wait(pid)
 }
 
@@ -31,10 +31,6 @@ const sync = {childin, childout
 	var rbuf : byte[2048]
 	var n, len
 
-	len = std.read(childout, rbuf[:])
-	if len >= 0
-		std.write(1, rbuf[:len])
-	;;
 	while true
 		n = std.read(0, reqhash[:])
 		if n == 64
