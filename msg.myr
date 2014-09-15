@@ -38,9 +38,11 @@ pkg =
 		size	: uint64
 	;;
 
+	/*
 	const msgsend	: (f : bio.file#, msg : msg# -> bool)
 	const msgrecv	: (f : bio.file# -> msg#)
 	const msgpretty	: (msg : msg# -> void)
+	*/
 ;;
 
 /*

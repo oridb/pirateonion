@@ -87,7 +87,7 @@ const filelist = {filemap, path
 		| `std.Some ".": 	continue
 		| `std.Some "..":	continue
 		| `std.Some ent:
-			p = pathjoin(path, ent)
+			p = std.pathcat(path, ent)
 			if std.stat(p, &sb) != 0
 				std.put("Could not stat file %s\n")
 			;;
@@ -139,18 +139,6 @@ const filehash = {filemap, p
 	;;
 	std.put("hash: %s\tpath: %s\n", hbuf[:n], p)
 	std.htput(filemap, std.sldup(hbuf[:n]), std.sldup(p))
-}
-
-const pathjoin = {a, b
-	var sep
-
-	if a[a.len-1] == '/' castto(byte) || b[0] == '/' castto(byte)
-		sep = ""
-	else
-		sep = "/"
-	;;
-
-	-> std.fmt("%s%s%s", a, sep, b)
 }
 
 const filemapfree = {fm
