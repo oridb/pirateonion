@@ -1,4 +1,5 @@
 use std
+use sys
 use bio
 use cryptohash
 
@@ -52,7 +53,7 @@ const sendfile = {filemap, fhash
 		std.put("Failed to open %s\n", path)
 		->
 	;;
-	if std.fstat(fd, &sb) != 0
+	if sys.fstat(fd castto(sys.fd), &sb) != 0
 		std.put("Failed to stat %s\n", path)
 		->
 	;;
@@ -70,7 +71,6 @@ const sendfile = {filemap, fhash
 		sz -= n
 	;;
 }
-		
 
 const filelist = {filemap, path
 	var dir
@@ -88,12 +88,12 @@ const filelist = {filemap, path
 		| `std.Some "..":	continue
 		| `std.Some ent:
 			p = std.pathcat(path, ent)
-			if std.stat(p, &sb) != 0
+			if sys.stat(p, &sb) != 0
 				std.put("Could not stat file %s\n")
 			;;
-			if (sb.mode & std.Sifmt) == std.Sifdir
+			if (sb.mode & sys.Sifmt) == sys.Sifdir
 				filelist(filemap, p)
-			elif (sb.mode & std.Sifmt) == std.Sifreg
+			elif (sb.mode & sys.Sifmt) == sys.Sifreg
 				filehash(filemap, p)
 			else
 				std.put("skipping special file: %s\n", p)

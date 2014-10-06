@@ -1,4 +1,5 @@
 use std
+use sys
 
 use "opts.use"
 
@@ -13,11 +14,11 @@ const master = {dirs
 	var stdout : std.fd[2]
 
 
-	err = std.pipe(stdin[:])
+	err = std.pipe(&stdin)
 	if err != 0
 		std.fatal(1, "Could not create pipes: err %l\n", -err)
 	;;
-	err = std.pipe(stdout[:])
+	err = std.pipe(&stdout)
 	if err != 0
 		std.fatal(1, "Could not create pipes: err %l\n", -err)
 	;;
@@ -67,10 +68,10 @@ const runslave = {stdin, stdout, dirs
 		std.fatal(1, "Could not fork to start slave\n")
 	elif pid == 0
 		/* stdin/stdout for our communication. */
-		if std.dup2(stdin, 0) != 0
+		if sys.dup2(stdin castto(sys.fd), 0) != 0
 			std.fatal(1, "unable to set stdin\n")
 		;;
-		if std.dup2(stdin, 1) != 1
+		if sys.dup2(stdin castto(sys.fd), 1) != 1
 			std.fatal(1, "unable to set stdout\n")
 		;;
 		std.close(stdin)
