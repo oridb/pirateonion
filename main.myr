@@ -15,6 +15,7 @@ const main = {args
 		| ('h', _):	usage(args[0])
 		| ('s', _):	opt_master = false
 		| ('r', rsrv):	opt_remote = rsrv
+		| opt:		std.fatal(1, "unknown option %c\n", opt)
 		;;
 	;;
 
