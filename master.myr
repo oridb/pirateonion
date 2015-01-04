@@ -24,7 +24,12 @@ const master = {dirs
 	;;
 	pid = runslave(stdin[1], stdout[0], dirs)
 	sync(stdin[0], stdout[1])
-	wait(pid)
+	match std.wait(pid)
+	| `std.Wsuccess:	/* nothing */
+	| `std.Wfailure:	std.fatal(1, "failed to run pirateonion\n")
+	| `std.Wsignalled:	std.fatal(1, "failed to run pirateonion: crashed\n")
+	| `std.Waiterror:	std.fatal(1, "failed to wait for pirateonion\n")
+	;;
 }
 
 const sync = {childin, childout
@@ -85,22 +90,3 @@ const runslave = {stdin, stdout, dirs
 
 }
 
-const wait = {pid
-	var status
-
-	std.waitpid(pid, &status, 0)
-
-	/* and wait for a result */
-	match std.waitstatus(status)
-	| `std.Waitexit	estatus:
-		if estatus != 0
-			std.fatal(1, "Failed to run pirateonion", estatus)
-		;;
-	| `std.Waitsig sig:
-		if sig != 0
-			std.fatal(1, "Failed to run pirateonion: crashed with signal %i\n", sig)
-		;;
-	| `std.Waitstop stop:
-		std.fatal(1, "pirateonion stopped: %i\n", stop)
-	;;
-}
