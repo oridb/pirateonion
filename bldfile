@@ -1,0 +1,7 @@
+bin pirateonion =
+	main.myr
+	master.myr
+	opts.myr
+	slave.myr
+	msg.myr
+;;
