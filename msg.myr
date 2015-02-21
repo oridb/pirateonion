@@ -45,14 +45,12 @@ pkg =
 	*/
 ;;
 
-/*
 generic try = {opt : std.option(@a::(numeric,integral)) -> @a::(numeric,integral)
 	match opt
 	| `std.Some v:	-> v
 	| `std.None:	std.fatal(1, "expected value, got `None\n")
 	;;
 }
-*/
 
 const msgsend	= {f, msg
 	match msg#
@@ -84,7 +82,6 @@ const msgsend	= {f, msg
 	-> true
 }
 
-/*
 const msgrecv = {f
 	var t
 	var hash : byte[32]
@@ -100,7 +97,7 @@ const msgrecv = {f
 		-> std.mk(`Mend)
 	| `std.Some Msgann:
 		bio.read(f, hash[:])
-		npath = try(bio.getle(f))
+		npath = try(bio.getle32(f))
 		path = std.slalloc(npath)
 		bio.read(f, path)
 		-> std.mk(`Mann [.hash=hash, .path=path])
@@ -108,20 +105,22 @@ const msgrecv = {f
 		bio.read(f, hash[:])
 		-> std.mk(`Mreq	 [.hash=hash])
 	| `std.Some Msgfhdr:
-		fh.mode	= try(bio.getle(f))
-		fh.uid	= try(bio.getle(f))
-		fh.gid	= try(bio.getle(f))
-		fh.atimesec	= try(bio.getle(f))
-		fh.atimensec	= try(bio.getle(f))
-		fh.mtimesec	= try(bio.getle(f))
-		fh.mtimensec	= try(bio.getle(f))
-		fh.ctimesec	= try(bio.getle(f))
-		fh.ctimensec	= try(bio.getle(f))
-		fh.size	= try(bio.getle(f));
+		fh.mode = try(bio.getle32(f))
+		fh.uid = try(bio.getle32(f))
+		fh.gid = try(bio.getle32(f))
+		fh.atimesec = try(bio.getle64(f))
+		fh.atimensec = try(bio.getle64(f))
+		fh.mtimesec = try(bio.getle64(f))
+		fh.mtimensec = try(bio.getle64(f))
+		fh.ctimesec = try(bio.getle64(f))
+		fh.ctimensec = try(bio.getle64(f))
+		fh.size = try(bio.getle64(f))
+
 		-> std.mk(`Mfhdr fh)
+	| `std.Some _:
+		std.fatal(1, "Malformed message!\n")
 	| `std.None:
 		std.fatal(1, "Malformed message!\n")
 	;;
 }
-*/
 
