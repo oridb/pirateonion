@@ -63,23 +63,23 @@ const msgsend	= {f, msg
 	| `Mann a:
 		bio.putb(f, Msgann)
 		bio.write(f, a.hash[:])
-		bio.putle(f, a.path.len)
+		bio.putle32(f, a.path.len)
 		bio.write(f, a.path)
 	| `Mreq r:
 		bio.putb(f, Msgreq)
 		bio.write(f, r.hash[:])
 	| `Mfhdr fh:
 		bio.putb(f, Msgfhdr)
-		bio.putle(f, fh.mode)
-		bio.putle(f, fh.uid)
-		bio.putle(f, fh.gid)
-		bio.putle(f, fh.atimesec)
-		bio.putle(f, fh.atimensec)
-		bio.putle(f, fh.mtimesec)
-		bio.putle(f, fh.mtimensec)
-		bio.putle(f, fh.ctimesec)
-		bio.putle(f, fh.ctimensec)
-		bio.putle(f, fh.size)
+		bio.putle32(f, fh.mode)
+		bio.putle32(f, fh.uid)
+		bio.putle32(f, fh.gid)
+		bio.putle64(f, fh.atimesec)
+		bio.putle64(f, fh.atimensec)
+		bio.putle64(f, fh.mtimesec)
+		bio.putle64(f, fh.mtimensec)
+		bio.putle64(f, fh.ctimesec)
+		bio.putle64(f, fh.ctimensec)
+		bio.putle64(f, fh.size)
 	;;
 	-> true
 }
