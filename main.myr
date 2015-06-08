@@ -6,35 +6,33 @@ use "opts.use"
 use "slave.use"
 
 const main = {args
-	var ctx
+	var cmd
 	var dirs
 
-	ctx = std.optinit("hsr", args)
-	while !std.optdone(ctx)
-		match std.optnext(ctx)
-		| ('h', _):	usage(args[0])
+	cmd = std.optparse(args, &[
+		.argdesc = "dirs...",
+		.opts = [
+			[.opt='s', .desc="run in slave mode; mostly for internal use"],
+			[.opt='r', .arg="remote", .desc="remote server name"]
+		][:]
+	])
+	for opt in cmd.opts
+		match opt
 		| ('s', _):	opt_master = false
 		| ('r', rsrv):	opt_remote = rsrv
-		| _:	std.fatal(1, "Unknown cli option")
+		| _:	std.fatal("unknown cli option")
 		;;
 	;;
 
-	if ctx.args.len == 0
+	if cmd.args.len == 0
 		dirs = ["."][:]
 	else
-		dirs = ctx.args
+		dirs = cmd.args
 	;;
 	if opt_master
 		master(dirs)
 	else
 		slave(dirs)
 	;;
-}
-
-const usage = {bin
-	std.put("%s [-h] [-s] dirs...\n")
-	std.put("\tPirate onion. Arr-chives your files.\n")
-	std.put("\t-h\tprint this help\n")
-	std.put("\t-s\trun as slave\n")
 }
 

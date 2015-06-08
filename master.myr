@@ -16,19 +16,19 @@ const master = {dirs
 
 	err = std.pipe(&stdin)
 	if err != 0
-		std.fatal(1, "Could not create pipes: err %l\n", -err)
+		std.fatal("Could not create pipes: err %l\n", -err)
 	;;
 	err = std.pipe(&stdout)
 	if err != 0
-		std.fatal(1, "Could not create pipes: err %l\n", -err)
+		std.fatal("Could not create pipes: err %l\n", -err)
 	;;
 	pid = runslave(stdin[1], stdout[0], dirs)
 	sync(stdin[0], stdout[1])
 	match std.wait(pid)
 	| `std.Wsuccess:	/* nothing */
-	| `std.Wfailure:	std.fatal(1, "failed to run pirateonion\n")
-	| `std.Wsignalled:	std.fatal(1, "failed to run pirateonion: crashed\n")
-	| `std.Waiterror:	std.fatal(1, "failed to wait for pirateonion\n")
+	| `std.Wfailure:	std.fatal("failed to run pirateonion\n")
+	| `std.Wsignalled:	std.fatal("failed to run pirateonion: crashed\n")
+	| `std.Waiterror:	std.fatal("failed to wait for pirateonion\n")
 	;;
 }
 
@@ -70,20 +70,19 @@ const runslave = {stdin, stdout, dirs
 	/* fork the worker */
 	pid = std.fork()
 	if pid == -1
-		std.fatal(1, "Could not fork to start slave\n")
+		std.fatal("Could not fork to start slave\n")
 	elif pid == 0
 		/* stdin/stdout for our communication. */
 		if sys.dup2(stdin castto(sys.fd), 0) != 0
-			std.fatal(1, "unable to set stdin\n")
+			std.fatal("unable to set stdin\n")
 		;;
 		if sys.dup2(stdin castto(sys.fd), 1) != 1
-			std.fatal(1, "unable to set stdout\n")
+			std.fatal("unable to set stdout\n")
 		;;
 		std.close(stdin)
 		std.close(stdout)
-		if std.execvp(cmd[0], cmd) < 0
-			std.fatal(1, "failed to exec %s\n")
-		;;
+		std.execvp(cmd[0], cmd)
+		std.fatal("failed to exec %s\n")
 	else
 		-> pid
 	;;

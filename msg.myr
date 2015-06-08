@@ -48,7 +48,7 @@ pkg =
 generic try = {opt : std.option(@a::(numeric,integral)) -> @a::(numeric,integral)
 	match opt
 	| `std.Some v:	-> v
-	| `std.None:	std.fatal(1, "expected value, got `None\n")
+	| `std.None:	std.fatal("expected value, got `None\n")
 	;;
 }
 
@@ -79,6 +79,7 @@ const msgsend	= {f, msg
 		bio.putle64(f, fh.ctimensec)
 		bio.putle64(f, fh.size)
 	;;
+	bio.flush(f)
 	-> true
 }
 
@@ -118,9 +119,9 @@ const msgrecv = {f
 
 		-> std.mk(`Mfhdr fh)
 	| `std.Some _:
-		std.fatal(1, "Malformed message!\n")
+		std.fatal("Malformed message!\n")
 	| `std.None:
-		std.fatal(1, "Malformed message!\n")
+		std.fatal("Malformed message!\n")
 	;;
 }
 
