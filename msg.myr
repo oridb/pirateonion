@@ -45,16 +45,7 @@ pkg =
 	*/
 ;;
 
-/*
-generic try = {opt : std.option(@a::(numeric,integral)) -> @a::(numeric,integral)
-	match opt
-	| `std.Some v:	-> v
-	| `std.None:	std.fatal(1, "expected value, got `None\n")
-	;;
-}
-*/
-
-const msgsend	= {f, msg
+const msgsend = {f, msg
 	match msg#
 	| `Mstart:
 		bio.putb(f, Msgstart)
@@ -63,28 +54,28 @@ const msgsend	= {f, msg
 	| `Mann a:
 		bio.putb(f, Msgann)
 		bio.write(f, a.hash[:])
-		bio.putle(f, a.path.len)
+		bio.putle32(f, a.path.len)
 		bio.write(f, a.path)
 	| `Mreq r:
 		bio.putb(f, Msgreq)
 		bio.write(f, r.hash[:])
 	| `Mfhdr fh:
 		bio.putb(f, Msgfhdr)
-		bio.putle(f, fh.mode)
-		bio.putle(f, fh.uid)
-		bio.putle(f, fh.gid)
-		bio.putle(f, fh.atimesec)
-		bio.putle(f, fh.atimensec)
-		bio.putle(f, fh.mtimesec)
-		bio.putle(f, fh.mtimensec)
-		bio.putle(f, fh.ctimesec)
-		bio.putle(f, fh.ctimensec)
-		bio.putle(f, fh.size)
+		bio.putle32(f, fh.mode)
+		bio.putle32(f, fh.uid)
+		bio.putle32(f, fh.gid)
+		bio.putle64(f, fh.atimesec)
+		bio.putle64(f, fh.atimensec)
+		bio.putle64(f, fh.mtimesec)
+		bio.putle64(f, fh.mtimensec)
+		bio.putle64(f, fh.ctimesec)
+		bio.putle64(f, fh.ctimensec)
+		bio.putle64(f, fh.size)
 	;;
+	bio.flush(f)
 	-> true
 }
 
-/*
 const msgrecv = {f
 	var t
 	var hash : byte[32]
@@ -94,34 +85,45 @@ const msgrecv = {f
 
 	t = bio.getb(f)
 	match t
-	| `std.Some Msgstart:
+	| `bio.Ok Msgstart:
 		-> std.mk(`Mstart)
-	| `std.Some Msgend:
+	| `bio.Ok Msgend:
 		-> std.mk(`Mend)
-	| `std.Some Msgann:
+	| `bio.Ok Msgann:
 		bio.read(f, hash[:])
-		npath = try(bio.getle(f))
+		npath = tryread(bio.getle32(f))
 		path = std.slalloc(npath)
 		bio.read(f, path)
 		-> std.mk(`Mann [.hash=hash, .path=path])
-	| `std.Some Msgreq:
+	| `bio.Ok Msgreq:
 		bio.read(f, hash[:])
 		-> std.mk(`Mreq	 [.hash=hash])
-	| `std.Some Msgfhdr:
-		fh.mode	= try(bio.getle(f))
-		fh.uid	= try(bio.getle(f))
-		fh.gid	= try(bio.getle(f))
-		fh.atimesec	= try(bio.getle(f))
-		fh.atimensec	= try(bio.getle(f))
-		fh.mtimesec	= try(bio.getle(f))
-		fh.mtimensec	= try(bio.getle(f))
-		fh.ctimesec	= try(bio.getle(f))
-		fh.ctimensec	= try(bio.getle(f))
-		fh.size	= try(bio.getle(f));
+	| `bio.Ok Msgfhdr:
+		fh.mode = tryread(bio.getle32(f))
+		fh.uid = tryread(bio.getle32(f))
+		fh.gid = tryread(bio.getle32(f))
+		fh.atimesec = tryread(bio.getle64(f))
+		fh.atimensec = tryread(bio.getle64(f))
+		fh.mtimesec = tryread(bio.getle64(f))
+		fh.mtimensec = tryread(bio.getle64(f))
+		fh.ctimesec = tryread(bio.getle64(f))
+		fh.ctimensec = tryread(bio.getle64(f))
+		fh.size = tryread(bio.getle64(f))
+
 		-> std.mk(`Mfhdr fh)
-	| `std.None:
-		std.fatal(1, "Malformed message!\n")
+	| `bio.Ok _:
+		std.fatal("Malformed message!\n")
+	| `bio.Eof:
+		std.fatal("Malformed message!\n")
+	| `bio.Err e:
+		std.fatal("Transport error: {}\n", e)
 	;;
 }
-*/
 
+generic tryread = {val : bio.status(@a) -> @a
+	match val
+	| `bio.Ok v:	-> v
+	| `bio.Eof:	std.fatal("premature eof\n")
+	| `bio.Err e:	std.fatal("transport error: {}\n", e)
+	;;
+}

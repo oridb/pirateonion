@@ -27,7 +27,7 @@ const syncsend = {filemap
 	var n
 
 	while true
-		n = std.read(0, fhash[:])
+		n = std.try(std.read(0, fhash[:]))
 		if n == 64
 			sendfile(filemap, fhash[:])
 		elif n <= 0
@@ -48,11 +48,7 @@ const sendfile = {filemap, fhash
 	| `std.Some p:	path = p
 	;;
 
-	fd = std.open(path, std.Ordonly)
-	if fd < 0
-		std.put("Failed to open %s\n", path)
-		->
-	;;
+	fd = std.try(std.open(path, std.Ordonly))
 	if sys.fstat(fd castto(sys.fd), &sb) != 0
 		std.put("Failed to stat %s\n", path)
 		->
@@ -60,7 +56,7 @@ const sendfile = {filemap, fhash
 	sz = sb.size castto(std.size)
 	std.put("%l\n", sz)
 	while true
-		n = std.read(fd, buf[:])
+		n = std.try(std.read(fd, buf[:]))
 		if n == 0
 			break
 		elif n < 0
@@ -115,17 +111,11 @@ const filehash = {filemap, p
 	var h
 
 	cryptohash.sha256init(&h)
-	fd = std.open(p, std.Ordonly)
-	if fd < 0
-		std.put("Could not open %s\n", p)
-		->
-	;;
+	fd = std.try(std.open(p, std.Ordonly))
 
 	while true
-		n = std.read(fd, buf[:])
+		n = std.try(std.read(fd, buf[:]))
 		if n == 0
-			break
-		elif n < 0
 			break
 		;;
 		cryptohash.sha256add(&h, buf[:n])
