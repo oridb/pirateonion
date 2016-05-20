@@ -58,13 +58,13 @@ const runslave = {stdin, stdout, dirs
 	/* build the command array */
 	cmd = [][:]
 	if opt_remote.len > 0
-		cmd = std.slpush(cmd, "ssh")
-		cmd = std.slpush(cmd, opt_remote)
+		std.slpush(&cmd, "ssh")
+		std.slpush(&cmd, opt_remote)
 	;;
-	cmd = std.slpush(cmd, "./pirateonion")
-	cmd = std.slpush(cmd, "-s")
+	std.slpush(&cmd, "./pirateonion")
+	std.slpush(&cmd, "-s")
 	for d in dirs
-		cmd = std.slpush(cmd, d)
+		std.slpush(&cmd, d)
 	;;
 
 	/* fork the worker */
@@ -73,10 +73,10 @@ const runslave = {stdin, stdout, dirs
 		std.fatal("Could not fork to start slave\n")
 	elif pid == 0
 		/* stdin/stdout for our communication. */
-		if sys.dup2(stdin castto(sys.fd), 0) != 0
+		if sys.dup2((stdin : sys.fd), 0) != 0
 			std.fatal("unable to set stdin\n")
 		;;
-		if sys.dup2(stdin castto(sys.fd), 1) != 1
+		if sys.dup2((stdin : sys.fd), 1) != 1
 			std.fatal("unable to set stdout\n")
 		;;
 		std.close(stdin)

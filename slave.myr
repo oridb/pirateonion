@@ -49,11 +49,11 @@ const sendfile = {filemap, fhash
 	;;
 
 	fd = std.try(std.open(path, std.Ordonly))
-	if sys.fstat(fd castto(sys.fd), &sb) != 0
+	if sys.fstat((fd : sys.fd), &sb) != 0
 		std.put("Failed to stat %s\n", path)
-		->
+		-> void
 	;;
-	sz = sb.size castto(std.size)
+	sz = (sb.size : std.size)
 	std.put("%l\n", sz)
 	while true
 		n = std.try(std.read(fd, buf[:]))
@@ -74,8 +74,11 @@ const filelist = {filemap, path
 	var p
 
 	match std.diropen(path)
-	| `std.Ok d:	dir = d
-	| `std.Fail m:	std.put("Could not open dir %s: %s\n", path, m)
+	| `std.Ok d:
+		dir = d
+	| `std.Fail m:	
+		std.put("Could not open dir %s: %s\n", path, m)
+		-> void
 	;;
 	while true
 		match std.dirread(dir)
