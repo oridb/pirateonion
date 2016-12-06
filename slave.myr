@@ -50,7 +50,7 @@ const sendfile = {filemap, fhash
 
 	fd = std.try(std.open(path, std.Ordonly))
 	if sys.fstat((fd : sys.fd), &sb) != 0
-		std.put("Failed to stat %s\n", path)
+		std.put("Erred to stat %s\n", path)
 		-> void
 	;;
 	sz = (sb.size : std.size)
@@ -76,7 +76,7 @@ const filelist = {filemap, path
 	match std.diropen(path)
 	| `std.Ok d:
 		dir = d
-	| `std.Fail m:	
+	| `std.Err m:	
 		std.put("Could not open dir %s: %s\n", path, m)
 		-> void
 	;;
