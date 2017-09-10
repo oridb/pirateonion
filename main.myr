@@ -1,9 +1,9 @@
 use std
 
-use "master.use"
-use "msg.use"
-use "opts.use"
-use "slave.use"
+use "master"
+use "msg"
+use "opts"
+use "slave"
 
 const main = {args
 	var cmd
@@ -16,7 +16,7 @@ const main = {args
 			[.opt='r', .arg="remote", .desc="remote server name"]
 		][:]
 	])
-	for opt in cmd.opts
+	for opt : cmd.opts
 		match opt
 		| ('s', _):	opt_master = false
 		| ('r', rsrv):	opt_remote = rsrv

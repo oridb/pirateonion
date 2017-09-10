@@ -1,9 +1,9 @@
 use std
 use sys
 use bio
-use cryptohash
+use crypto
 
-use "opts.use"
+use "opts"
 
 pkg =
 	const slave : (dirs : byte[:][:] -> void)
@@ -14,7 +14,7 @@ const slave = {dirs
 
 	filemap = std.mkht(std.strhash, std.streq)
 	std.put("Running as slave\n")
-	for d in dirs
+	for d : dirs
 		filelist(filemap, d)
 		syncsend(filemap)
 	;;
@@ -44,17 +44,17 @@ const sendfile = {filemap, fhash
 	var sb
 
 	match std.htget(filemap, fhash)
-	| `std.None:	std.put("Error locating %s\n", fhash)
+	| `std.None:	std.put("Error locating {}\n", fhash)
 	| `std.Some p:	path = p
 	;;
 
-	fd = std.try(std.open(path, std.Ordonly))
+	fd = std.try(std.open(path, std.Oread))
 	if sys.fstat((fd : sys.fd), &sb) != 0
-		std.put("Erred to stat %s\n", path)
+		std.put("Erred to stat {}\n", path)
 		-> void
 	;;
 	sz = (sb.size : std.size)
-	std.put("%l\n", sz)
+	std.put("{}\n", sz)
 	while true
 		n = std.try(std.read(fd, buf[:]))
 		if n == 0
@@ -77,7 +77,7 @@ const filelist = {filemap, path
 	| `std.Ok d:
 		dir = d
 	| `std.Err m:	
-		std.put("Could not open dir %s: %s\n", path, m)
+		std.put("Could not open dir {}: {}\n", path, m)
 		-> void
 	;;
 	while true
@@ -88,14 +88,14 @@ const filelist = {filemap, path
 		| `std.Some ent:
 			p = std.pathcat(path, ent)
 			if sys.stat(p, &sb) != 0
-				std.put("Could not stat file %s\n")
+				std.put("Could not stat file {}\n")
 			;;
 			if (sb.mode & sys.Sifmt) == sys.Sifdir
 				filelist(filemap, p)
 			elif (sb.mode & sys.Sifmt) == sys.Sifreg
 				filehash(filemap, p)
 			else
-				std.put("skipping special file: %s\n", p)
+				std.put("skipping special file: {}\n", p)
 			;;
 			std.slfree(p)
 			std.slfree(ent)
@@ -113,35 +113,31 @@ const filehash = {filemap, p
 	var n
 	var h
 
-	cryptohash.sha256init(&h)
-	fd = std.try(std.open(p, std.Ordonly))
+	crypto.sha256init(&h)
+	fd = std.try(std.open(p, std.Oread))
 
 	while true
 		n = std.try(std.read(fd, buf[:]))
 		if n == 0
 			break
 		;;
-		cryptohash.sha256add(&h, buf[:n])
+		crypto.sha256add(&h, buf[:n])
 	;;
-	hval = cryptohash.sha256fin(&h)
+	hval = crypto.sha256fin(&h)
 	std.close(fd)
 	n = 0
-	for b in hval[:]
+	for b : hval[:]
 		std.bfmt(hbuf[n:], "0%02xb", b)
 		n += 2
 	;;
-	std.put("hash: %s\tpath: %s\n", hbuf[:n], p)
+	std.put("hash: {}\tpath: {}\n", hbuf[:n], p)
 	std.htput(filemap, std.sldup(hbuf[:n]), std.sldup(p))
 }
 
 const filemapfree = {fm
-	var keys
-
-	keys = std.htkeys(fm)
-	for k in keys
-		std.slfree(std.htgetv(fm, k, ""))
+	for (k, v) : std.byhtkeyvals(fm)
 		std.slfree(k)
+		std.slfree(v)
 	;;
-	std.slfree(keys)
 	std.htfree(fm)
 }

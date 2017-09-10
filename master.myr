@@ -1,7 +1,7 @@
 use std
 use sys
 
-use "opts.use"
+use "opts"
 
 pkg =
 	const master	: (dirs : byte[:][:] -> void)
@@ -16,11 +16,11 @@ const master = {dirs
 
 	err = std.pipe(&stdin)
 	if err != 0
-		std.fatal("Could not create pipes: err %l\n", -err)
+		std.fatal("Could not create pipes: err {}\n", -err)
 	;;
 	err = std.pipe(&stdout)
 	if err != 0
-		std.fatal("Could not create pipes: err %l\n", -err)
+		std.fatal("Could not create pipes: err {}\n", -err)
 	;;
 	pid = runslave(stdin[1], stdout[0], dirs)
 	sync(stdin[0], stdout[1])
@@ -63,7 +63,7 @@ const runslave = {stdin, stdout, dirs
 	;;
 	std.slpush(&cmd, "./pirateonion")
 	std.slpush(&cmd, "-s")
-	for d in dirs
+	for d : dirs
 		std.slpush(&cmd, d)
 	;;
 
@@ -82,7 +82,7 @@ const runslave = {stdin, stdout, dirs
 		std.close(stdin)
 		std.close(stdout)
 		std.execvp(cmd[0], cmd)
-		std.fatal("failed to exec %s\n")
+		std.fatal("failed to exec {}\n")
 	else
 		-> pid
 	;;
