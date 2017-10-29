@@ -85,45 +85,38 @@ const msgrecv = {f
 
 	t = bio.getb(f)
 	match t
-	| `bio.Ok Msgstart:
+	| `std.Ok Msgstart:
 		-> std.mk(`Mstart)
-	| `bio.Ok Msgend:
+	| `std.Ok Msgend:
 		-> std.mk(`Mend)
-	| `bio.Ok Msgann:
+	| `std.Ok Msgann:
 		bio.read(f, hash[:])
-		npath = tryread(bio.getle32(f))
+		npath = std.try(bio.getle32(f))
 		path = std.slalloc(npath)
 		bio.read(f, path)
 		-> std.mk(`Mann [.hash=hash, .path=path])
-	| `bio.Ok Msgreq:
+	| `std.Ok Msgreq:
 		bio.read(f, hash[:])
 		-> std.mk(`Mreq	 [.hash=hash])
-	| `bio.Ok Msgfhdr:
-		fh.mode = tryread(bio.getle32(f))
-		fh.uid = tryread(bio.getle32(f))
-		fh.gid = tryread(bio.getle32(f))
-		fh.atimesec = tryread(bio.getle64(f))
-		fh.atimensec = tryread(bio.getle64(f))
-		fh.mtimesec = tryread(bio.getle64(f))
-		fh.mtimensec = tryread(bio.getle64(f))
-		fh.ctimesec = tryread(bio.getle64(f))
-		fh.ctimensec = tryread(bio.getle64(f))
-		fh.size = tryread(bio.getle64(f))
+	| `std.Ok Msgfhdr:
+		fh.mode = std.try(bio.getle32(f))
+		fh.uid = std.try(bio.getle32(f))
+		fh.gid = std.try(bio.getle32(f))
+		fh.atimesec = std.try(bio.getle64(f))
+		fh.atimensec = std.try(bio.getle64(f))
+		fh.mtimesec = std.try(bio.getle64(f))
+		fh.mtimensec = std.try(bio.getle64(f))
+		fh.ctimesec = std.try(bio.getle64(f))
+		fh.ctimensec = std.try(bio.getle64(f))
+		fh.size = std.try(bio.getle64(f))
 
 		-> std.mk(`Mfhdr fh)
-	| `bio.Ok _:
+	| `std.Ok _:
 		std.fatal("Malformed message!\n")
-	| `bio.Eof:
+	| `std.Err `bio.Eof:
 		std.fatal("Malformed message!\n")
-	| `bio.Err e:
+	| `std.Err e:
 		std.fatal("Transport error: {}\n", e)
 	;;
 }
 
-generic tryread = {val : bio.status(@a) -> @a
-	match val
-	| `bio.Ok v:	-> v
-	| `bio.Eof:	std.fatal("premature eof\n")
-	| `bio.Err e:	std.fatal("transport error: {}\n", e)
-	;;
-}

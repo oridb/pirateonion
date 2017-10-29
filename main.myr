@@ -12,7 +12,7 @@ const main = {args
 	cmd = std.optparse(args, &[
 		.argdesc = "dirs...",
 		.opts = [
-			[.opt='s', .desc="run in slave mode; mostly for internal use"],
+			[.opt='s', .desc="internal: run in slave mode"],
 			[.opt='r', .arg="remote", .desc="remote server name"]
 		][:]
 	])
